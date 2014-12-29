@@ -27,7 +27,7 @@
     
     UINavigationController* navController = [[UINavigationController alloc] initWithRootViewController:settingsViewController];
     
-    [self presentModalViewController:navController animated:YES];
+    [self presentViewController:navController animated:true completion:nil];
     
 }
 

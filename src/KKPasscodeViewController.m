@@ -252,7 +252,6 @@
             id<UIApplicationDelegate> appDelegate = [[UIApplication sharedApplication] delegate];
             self.dimView = [[UIView alloc] initWithFrame:appDelegate.window.rootViewController.view.bounds];
             self.dimView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
-            self.dimView.backgroundColor = [UIColor scrollViewTexturedBackgroundColor];
             self.dimView.alpha = 0.0f;
             [appDelegate.window.rootViewController.view addSubview:self.dimView];
             [UIView animateWithDuration:0.3f animations:^{

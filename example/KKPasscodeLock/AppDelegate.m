@@ -65,7 +65,7 @@
                 nav.navigationBar.barStyle = _navigationController.navigationBar.barStyle;
             }
             
-            [_navigationController presentModalViewController:nav animated:NO];
+            [_navigationController presentViewController:nav animated:true completion:nil];
         });
         
     }
