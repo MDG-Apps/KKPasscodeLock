@@ -38,12 +38,16 @@
 	
     // the erase content switch.
 	UISwitch* _eraseDataSwitch;
+    UISwitch* _TouchIDEnabled;
 	
     // whatever the passcode lock is turned on or off
 	BOOL _passcodeLockOn;
     
     // whatever the erase data option is turned on or off
 	BOOL _eraseDataOn;
+    
+    // If Touch ID is enabled
+    BOOL _touchIDOn;
 }
 
 @property (nonatomic) Class passcodeViewControllerClass;

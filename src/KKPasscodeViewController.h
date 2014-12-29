@@ -108,6 +108,9 @@ typedef NSUInteger KKPasscodeMode;
     // Used to make sure we do not release the keyboard when on iPad
     BOOL _shouldReleaseFirstResponser;
     
+    // Check if Touch ID is enabled
+    BOOL _touchIDEnabled;
+    
 }
 
 @property (nonatomic, unsafe_unretained) id <KKPasscodeViewControllerDelegate> delegate;

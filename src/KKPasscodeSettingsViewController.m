@@ -80,7 +80,9 @@
 	self.navigationItem.title = KKPasscodeLockLocalizedString(@"Passcode Lock", @"");
     
 	_eraseDataSwitch = [[UISwitch alloc] init];
+    _TouchIDEnabled = [[UISwitch alloc] init];
 	[_eraseDataSwitch addTarget:self action:@selector(eraseDataSwitchChanged:) forControlEvents:UIControlEventValueChanged];
+    [_TouchIDEnabled addTarget:self action:@selector(touchidswitchchanged:) forControlEvents:UIControlEventValueChanged];
 }
 
 - (void)viewDidUnload
@@ -95,8 +97,10 @@
 	[super viewWillAppear:animated];
     
 	_passcodeLockOn = [[KKKeychain getStringForKey:@"passcode_on"] isEqualToString:@"YES"];
+    _touchIDOn = [[KKKeychain getStringForKey:@"touchid_on"] isEqualToString:@"YES"];
 	_eraseDataOn = [[KKKeychain getStringForKey:@"erase_data_on"] isEqualToString:@"YES"];
 	_eraseDataSwitch.on = _eraseDataOn;
+    _TouchIDEnabled.on = _touchIDOn;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)toInterfaceOrientation
@@ -114,6 +118,17 @@
 	} else {
         [self disableEraseDataHandler];
 	}
+}
+
+- (void)touchidswitchchanged:(id)sender
+{
+    if (_TouchIDEnabled.on) {
+        _touchIDOn = YES;
+        [KKKeychain setString:@"YES" forKey:@"touchid_on"];
+    } else {
+        _touchIDOn = NO;
+        [KKKeychain setString:@"NO" forKey:@"touchid_on"];
+    }
 }
 
 - (void)eraseDataSwitchChanged:(id)sender
@@ -176,7 +191,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     if (section==0) {
-        return 2;
+        return 3;
     }
     
 	return 1;
@@ -227,6 +242,10 @@
             } else {
                 cell.textLabel.text = KKPasscodeLockLocalizedString(@"Turn Passcode On", @"");
             }
+        } else if (indexPath.row == 2) {
+            cell.textLabel.text = KKPasscodeLockLocalizedString(@"Use Touch ID", @"");
+            cell.accessoryView = _TouchIDEnabled;
+            cell.textLabel.textAlignment = NSTextAlignmentCenter;
         } else {
             cell.textLabel.text = KKPasscodeLockLocalizedString(@"Change Passcode", @"");
             

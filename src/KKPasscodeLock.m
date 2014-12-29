@@ -67,6 +67,10 @@ static KKPasscodeLock *sharedLock = nil;
     return _dateFormatter;
 }
 
+- (BOOL)isTouchIDEnabled
+{
+    return [[KKKeychain getStringForKey:@"touchid_on"] isEqualToString:@"YES"];
+}
 - (BOOL)isPasscodeRequired
 {
 	return [[KKKeychain getStringForKey:@"passcode_on"] isEqualToString:@"YES"];

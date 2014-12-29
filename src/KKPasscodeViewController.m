@@ -21,6 +21,7 @@
 #import "KKPasscodeLock.h"
 
 #import <QuartzCore/QuartzCore.h>
+#import <LocalAuthentication/LocalAuthentication.h>
 #import <AudioToolbox/AudioToolbox.h>
 
 @interface KKPasscodeViewController ()
@@ -125,6 +126,7 @@
 	[super viewWillAppear:animated];
     
     _passcodeLockOn = [[KKKeychain getStringForKey:@"passcode_on"] isEqualToString:@"YES"];
+    _touchIDEnabled = [[KKKeychain getStringForKey:@"touchid_on"] isEqualToString:@"YES"];
 	_eraseData = [[KKPasscodeLock sharedLock] eraseOption] && [[KKKeychain getStringForKey:@"erase_data_on"] isEqualToString:@"YES"];
     
 	_enterPasscodeTextField = [[UITextField alloc] init];
@@ -235,6 +237,19 @@
 	[[_textFields objectAtIndex:0] becomeFirstResponder];
 	[[_tableViews objectAtIndex:0] reloadData];
 	[[_textFields objectAtIndex:[_tableViews count] - 1] setReturnKeyType:UIReturnKeyDone];
+    
+    if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_7_1 && _touchIDEnabled && _mode == KKPasscodeModeEnter) {
+        LAContext *lcontext = [[LAContext alloc] init];
+        NSError *lerror = nil;
+        NSString *reason = KKPasscodeLockLocalizedString(@"Authenticate using your finger", @"");
+        if ([lcontext canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&lerror]) {
+            [lcontext evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics localizedReason:reason reply:^(BOOL success, NSError *error) {
+                if (success) {
+                    [self vaildatePasscode:_confirmPasscodeTextField];
+                }
+            }];
+        }
+    }
 	
 	if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
 		if ([_tableViews count] > 1) {
