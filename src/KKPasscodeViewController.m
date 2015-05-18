@@ -21,6 +21,7 @@
 #import "KKPasscodeLock.h"
 
 #import <QuartzCore/QuartzCore.h>
+#import <Foundation/Foundation.h>
 #import <LocalAuthentication/LocalAuthentication.h>
 #import <AudioToolbox/AudioToolbox.h>
 
@@ -47,6 +48,7 @@
 
 @synthesize delegate = _delegate;
 @synthesize mode = _mode;
+@synthesize bgimage = _bgimage;
 @synthesize isSmallLandscape;
 
 #pragma mark -
@@ -80,13 +82,18 @@
 {
 	[super loadView];
 	
-	self.view.backgroundColor = [UIColor whiteColor];
-    
     CGRect tableViewFrame = self.view.bounds;
-    if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad && [[UIScreen mainScreen] bounds].size.height > 480) {
-        // is running on device with 4" screen so add background tableView
+    if (_mode == KKPasscodeModeEnter) {
+        self.view.backgroundColor = [UIColor colorWithPatternImage:_bgimage];
+    } else {
         UITableView *backgroundTableView = [[UITableView alloc] initWithFrame:tableViewFrame style:UITableViewStyleGrouped];
         [self.view addSubview:backgroundTableView];
+    }
+    
+    if (UI_USER_INTERFACE_IDIOM() != UIUserInterfaceIdiomPad && [[UIScreen mainScreen] bounds].size.height > 480) {
+        // is running on device with 4" screen so add background tableView
+        /*UITableView *backgroundTableView = [[UITableView alloc] initWithFrame:tableViewFrame style:UITableViewStyleGrouped];
+        [self.view addSubview:backgroundTableView];*/
         
         //and move other tableViews down so boxes are vertically centered
         tableViewFrame.origin.y += 44.0;
@@ -97,15 +104,15 @@
 	_enterPasscodeTableView.delegate = self;
 	_enterPasscodeTableView.dataSource = self;
 	_enterPasscodeTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-	_enterPasscodeTableView.backgroundColor = [UIColor groupTableViewBackgroundColor];
+    _enterPasscodeTableView.backgroundColor = [UIColor clearColor];
 	[self.view addSubview:_enterPasscodeTableView];
 	
 	_setPasscodeTableView = [[UITableView alloc] initWithFrame:tableViewFrame style:UITableViewStyleGrouped];
 	_setPasscodeTableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 	_setPasscodeTableView.delegate = self;
 	_setPasscodeTableView.dataSource = self;
+    _setPasscodeTableView.backgroundColor = [UIColor clearColor];
 	_setPasscodeTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-	_setPasscodeTableView.backgroundColor = [UIColor groupTableViewBackgroundColor];
 	[self.view addSubview:_setPasscodeTableView];
 	
 	_confirmPasscodeTableView = [[UITableView alloc] initWithFrame:tableViewFrame style:UITableViewStyleGrouped];
@@ -113,7 +120,7 @@
 	_confirmPasscodeTableView.delegate = self;
 	_confirmPasscodeTableView.dataSource = self;
 	_confirmPasscodeTableView.separatorStyle = UITableViewCellSeparatorStyleNone;
-	_confirmPasscodeTableView.backgroundColor = [UIColor groupTableViewBackgroundColor];
+	_confirmPasscodeTableView.backgroundColor = [UIColor clearColor];
 	[self.view addSubview:_confirmPasscodeTableView];
     
     _shouldReleaseFirstResponser = NO;
@@ -169,7 +176,11 @@
                                                                                               action:@selector(cancelButtonPressed:)];
         
     } else {
-        self.navigationItem.title = KKPasscodeLockLocalizedString(@"Enter Passcode", @"");
+        [self.navigationController.navigationBar setBackgroundImage:[UIImage new]
+                                 forBarMetrics:UIBarMetricsDefault];
+        self.navigationController.navigationBar.shadowImage = [UIImage new];
+        self.navigationController.navigationBar.translucent = YES;
+        self.navigationItem.title = @"";
     }
     
     CGFloat totalBoxesWidth = (71.0 * kPasscodeBoxesCount) - 10.0;
@@ -241,11 +252,22 @@
     if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_7_1 && _touchIDEnabled && _mode == KKPasscodeModeEnter) {
         LAContext *lcontext = [[LAContext alloc] init];
         NSError *lerror = nil;
-        NSString *reason = KKPasscodeLockLocalizedString(@"Authenticate using your finger", @"");
+        NSString *reason = KKPasscodeLockLocalizedString(@"Authentifizierung mithilfe des Fingers", @"");
         if ([lcontext canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&lerror]) {
             [lcontext evaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics localizedReason:reason reply:^(BOOL success, NSError *error) {
                 if (success) {
-                    [self vaildatePasscode:_confirmPasscodeTextField];
+                    dispatch_async(dispatch_get_main_queue(), ^ {
+                        _enterPasscodeTextField.text = [KKKeychain getStringForKey:@"passcode"];
+                        UITextField *text = [_textFields objectAtIndex: 0];
+                        text.text = [KKKeychain getStringForKey:@"passcode"];
+                        [self vaildatePasscode:text];
+                    });
+                } else {
+                    switch (error.code) {
+                        case LAErrorUserCancel:
+                            exit(0);
+                            break;
+                    }
                 }
             }];
         }
@@ -517,9 +539,9 @@
 					}
                     
 #if __IPHONE_OS_VERSION_MIN_REQUIRED < 60000
-                    [self dismissModalViewControllerAnimated:YES];
+                    [self dismissModalViewControllerAnimated:NO];
 #else
-                    [self dismissViewControllerAnimated:YES completion:nil];
+                    [self dismissViewControllerAnimated:NO completion:nil];
 #endif
 				}
 			}
@@ -657,6 +679,10 @@
     [self.view addSubview:textField];
 	UIView *headerView = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, self.view.bounds.size.width, 70.0)];
 	UILabel *headerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0.0, self.isSmallLandscape ? 2.0f : 28.0f, self.view.bounds.size.width, 30.0)];
+    // Move header label down for iPad
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
+        headerLabel.frame = CGRectMake(0.0, 60.0f, self.view.bounds.size.width, 30.0);
+    }
 	headerLabel.textColor = [UIColor colorWithRed:0.3 green:0.3 blue:0.4 alpha:1.0];
 	headerLabel.backgroundColor = [UIColor clearColor];
 

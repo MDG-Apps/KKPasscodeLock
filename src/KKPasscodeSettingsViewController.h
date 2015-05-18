@@ -48,10 +48,14 @@
     
     // If Touch ID is enabled
     BOOL _touchIDOn;
+    
+    // Setup controller
+    BOOL _InSetup;
 }
 
 @property (nonatomic) Class passcodeViewControllerClass;
 
 @property (nonatomic, unsafe_unretained) id <KKPasscodeSettingsViewControllerDelegate> delegate;
 @property (nonatomic, unsafe_unretained) id <KKPasscodeViewControllerDelegate> passcodeViewControllerDelegate;
+@property (nonatomic, assign) BOOL InSetup;
 @end

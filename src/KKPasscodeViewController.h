@@ -111,10 +111,13 @@ typedef NSUInteger KKPasscodeMode;
     // Check if Touch ID is enabled
     BOOL _touchIDEnabled;
     
+    UIImage* _bgimage;
+    
 }
 
 @property (nonatomic, unsafe_unretained) id <KKPasscodeViewControllerDelegate> delegate;
 @property (nonatomic, assign) KKPasscodeMode mode;
+@property (nonatomic, strong) UIImage* bgimage;
 
 
 @end

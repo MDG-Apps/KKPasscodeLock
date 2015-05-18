@@ -17,14 +17,15 @@
 
 #import "KKPasscodeSettingsViewController.h"
 #import "KKKeychain.h"
+#import <LocalAuthentication/LocalAuthentication.h>
 #import "KKPasscodeViewController.h"
 #import "KKPasscodeLock.h"
 
 
 @implementation KKPasscodeSettingsViewController
 
-
 @synthesize delegate = _delegate;
+@synthesize InSetup = _InSetup;
 
 #pragma mark -
 #pragma mark Properties
@@ -79,12 +80,22 @@
 	[super viewDidLoad];
 	self.navigationItem.title = KKPasscodeLockLocalizedString(@"Passcode Lock", @"");
     
+    if (_InSetup) {
+        UIBarButtonItem *item = [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                                                                target:self
+                                                                action:@selector(closethis:)];
+        [self.navigationItem setRightBarButtonItem:item animated:YES];
+    }
+    
 	_eraseDataSwitch = [[UISwitch alloc] init];
     _TouchIDEnabled = [[UISwitch alloc] init];
 	[_eraseDataSwitch addTarget:self action:@selector(eraseDataSwitchChanged:) forControlEvents:UIControlEventValueChanged];
     [_TouchIDEnabled addTarget:self action:@selector(touchidswitchchanged:) forControlEvents:UIControlEventValueChanged];
 }
 
+- (void)closethis:(id)sender {
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
 - (void)viewDidUnload
 {
     _eraseDataSwitch = nil;
@@ -191,7 +202,17 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     if (section==0) {
-        return 3;
+        if (floor(NSFoundationVersionNumber) > NSFoundationVersionNumber_iOS_7_1) {
+            LAContext *lcontext = [[LAContext alloc] init];
+            NSError *lerror = nil;
+            if ([lcontext canEvaluatePolicy:LAPolicyDeviceOwnerAuthenticationWithBiometrics error:&lerror]) {
+                return 3;
+            } else {
+                return 2;
+            }
+        } else {
+            return 2;
+        }
     }
     
 	return 1;
@@ -246,6 +267,13 @@
             cell.textLabel.text = KKPasscodeLockLocalizedString(@"Use Touch ID", @"");
             cell.accessoryView = _TouchIDEnabled;
             cell.textLabel.textAlignment = NSTextAlignmentCenter;
+            cell.selectionStyle = UITableViewCellSelectionStyleNone;
+            if (!_passcodeLockOn) {
+                cell.textLabel.textColor = [UIColor grayColor];
+                _TouchIDEnabled.enabled = NO;
+            } else {
+                _TouchIDEnabled.enabled = YES;
+            }
         } else {
             cell.textLabel.text = KKPasscodeLockLocalizedString(@"Change Passcode", @"");
             
@@ -300,13 +328,6 @@
         
 		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
 			nav.modalPresentationStyle = UIModalPresentationFormSheet;
-			nav.navigationBar.barStyle = UIBarStyleBlack;
-			nav.navigationBar.opaque = NO;
-		} else {
-			nav.navigationBar.tintColor = self.navigationController.navigationBar.tintColor;
-			nav.navigationBar.translucent = self.navigationController.navigationBar.translucent;
-			nav.navigationBar.opaque = self.navigationController.navigationBar.opaque;
-			nav.navigationBar.barStyle = self.navigationController.navigationBar.barStyle;
 		}
 		
 #if __IPHONE_OS_VERSION_MIN_REQUIRED < 60000
@@ -328,8 +349,7 @@
 		
 		if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
 			nav.modalPresentationStyle = UIModalPresentationFormSheet;
-			nav.navigationBar.barStyle = UIBarStyleBlack;
-			nav.navigationBar.opaque = NO;
+			// nav.navigationBar.barStyle = UIBarStyleBlack;
 		} else {
 			nav.navigationBar.tintColor = self.navigationController.navigationBar.tintColor;
 			nav.navigationBar.translucent = self.navigationController.navigationBar.translucent;

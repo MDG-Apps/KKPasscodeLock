@@ -49,6 +49,8 @@ extern CGFloat const kPasscodeBlockDisabled;
  */
 - (BOOL)isPasscodeBlocked;
 
+- (BOOL)isTouchIDEnabled;
+
 /**
  * return an interval <= 0 if the passcode is not blocked or a value > 0 indicating the time remaining until the passcode can be unlocked
  */

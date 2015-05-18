@@ -73,6 +73,16 @@ static KKPasscodeLock *sharedLock = nil;
 }
 - (BOOL)isPasscodeRequired
 {
+    if ([[KKKeychain getStringForKey:@"passcode_on"] isEqualToString:@"YES"]) {
+        NSUserDefaults* def = [[NSUserDefaults alloc] initWithSuiteName:@"group.yanniks.mdgnienburgprefs"];
+        if ([def boolForKey:@"setup"]) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
 	return [[KKKeychain getStringForKey:@"passcode_on"] isEqualToString:@"YES"];
 }
 
